@@ -257,6 +257,24 @@ async def main(pyfa):
                 '[Confessor, tanked]\nHeat Sink II\nSmall Armor Repairer II\n'
                 'Multispectrum Energized Membrane II\n\n5MN Microwarpdrive II\n\n'
                 + 'Small Focused Pulse Laser II, Multifrequency S\n' * 4))
+            # ...and the mirror failure: a candidate that DOES work must not be
+            # filtered out before it is measured. Slots 1-5 were excluded as
+            # "attribute implants"; 15 of the 18 Snake implants live there, so
+            # asking about Snakes returned "0 moved a number" from the very tool
+            # built to stop implants being named from memory.
+            snakes = await call('pilot_effects', fit_id=lid, kind='implants',
+                                search='Snake', limit=4)
+            assert snakes['considered'] > 10, snakes['considered']
+            assert snakes['moved_a_number'] > 5, snakes
+            assert any(r['slot'] <= 5 for r in snakes['results']), snakes['results']
+            # Ascendancy is warp speed and ONLY warp speed — a transcript sold it
+            # as "align/warp speed", and the panel could not contradict that
+            # until warp speed was one of the measured numbers.
+            asc = await call('pilot_effects', fit_id=lid, kind='implants',
+                             search='Ascendancy', limit=3)
+            assert asc['moved_a_number'] > 5, asc
+            assert all(set(r['deltas']) == {'warp_speed_aus'} for r in asc['results']), asc
+
             drugs = await call('pilot_effects', fit_id=tanked['fit_id'],
                                kind='boosters', limit=5)
             assert drugs['moved_a_number'] > 3, drugs

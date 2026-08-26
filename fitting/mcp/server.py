@@ -930,8 +930,16 @@ def _pilot_candidates(kind, slot, search):
         where, params = ("g.name = 'Booster' AND a.attributeName = 'boosterness' "
                          'AND ta.value <= 3'), []
     elif kind == 'implants':
+        # ALL slots, 1-10. Slots 1-5 were excluded on the reasoning that they
+        # hold attribute implants which cannot touch a fit -- wrong, and caught
+        # while grading on 2026-08-26: the pirate SETS live there. 15 of the 18
+        # published Snake implants are slots 1-5, so a caller asking about
+        # Snakes got "0 moved a number" -- a false negative from the one tool
+        # built to stop implants being named from memory. Pure attribute
+        # implants move nothing and measurement drops them anyway, which is the
+        # point of measuring rather than classifying by slot.
         where = ("c.name = 'Implant' AND g.name != 'Booster' "
-                 "AND a.attributeName = 'implantness' AND ta.value BETWEEN 6 AND 10")
+                 "AND a.attributeName = 'implantness' AND ta.value BETWEEN 1 AND 10")
         params = []
         if slot is not None:
             where += ' AND ta.value = ?'
@@ -966,6 +974,12 @@ def _headline(fit):
         'speed_ms': panel['navigation']['max_velocity_ms'],
         'align_s': panel['navigation'].get('align_time_prop_off_s',
                                            panel['navigation']['align_time_s']),
+        # Warp speed is the entire point of the Ascendancy set, and without it
+        # here the tool reported "0 moved a number" for all twelve of them —
+        # the same false negative as the slot filter, one metric further down.
+        # Align and warp speed are different numbers; a transcript conflated
+        # them and the tool could not contradict it.
+        'warp_speed_aus': panel['navigation']['warp_speed_aus'],
         # Two keys, not one: a cap-stable fit has no `lasts_s` to improve, so a
         # single field would report "no change" for a booster that took the fit
         # from 60% to 90% stable. Both are 0 when they do not apply, so both
@@ -1031,8 +1045,11 @@ def pilot_effects(fit_id: str, kind: str = 'boosters', slot: int = None,
                     'that changed nothing are not listed at all. '
                     + ('Side effects are possible per dose, not guaranteed, and are '
                        'excluded from `deltas`.' if kind == 'boosters'
-                       else 'Slots 1-5 are attribute implants (training speed) and '
-                            'are excluded — they do not touch a fit.')}
+                       else 'All ten slots are considered: the pirate sets '
+                            '(Snake, Crystal, Ascendancy) sit in slots 1-5 beside the '
+                            'attribute implants, and only measurement tells them '
+                            'apart. Narrow with `slot` or `search` to cut the run '
+                            'short.')}
 
 
 @mcp.tool()

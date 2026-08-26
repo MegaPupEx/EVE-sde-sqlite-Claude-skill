@@ -1696,3 +1696,75 @@ Deliberately out of scope: layer 2's `eve.db` stays at 3470007, so
 `engine_info.parity` now reports the skew as UNVERIFIED, which is exactly what
 it is for. Refreshing the engine is a pyfa rebuild plus a battery re-pin, and
 CI already does that per release; a session-start hook is the wrong place.
+
+## 2026-08-26 — the control arm, run by accident
+
+Owner ran the composed probe. The session had **neither MCP server**: it opened
+with `find / -maxdepth 4 -iname "eve-sde*.sqlite*"` returning nothing, fell
+through `acquisition.md` to download `eve-sde-items.sqlite` from the public
+release into a scratch directory, and queried it with raw `sqlite3` in Python.
+Not one `mcp__eve-sde__*` or `mcp__eve-fitting__*` call in either turn. The
+repo and skills were present — `eve-sde` loaded and read its own references —
+so this is a clean **control-arm measurement**: the stack's docs without the
+stack's tools.
+
+Layer 1's acquisition fallback worked exactly as designed, and the trait data
+it pulled was read correctly (mode bonuses, hardpoints, slot layout all match).
+Everything downstream of "now build a fit" failed.
+
+**Turn 1** recommended `3x 220mm AutoCannon II` on a Svipul. Verified here:
+
+* `220mm AutoCannon II` is not a type — the name is `220mm Vulcan AutoCannon II`
+* `Small Focused Warp Disruptor` is not a type
+* `Small Anti-EM Screen Reinforcer II` is not a type (`Small EM Shield Reinforcer II`)
+* a warp disruptor was placed in a HIGH slot, and duplicated in the mids
+* three guns on a hull whose hardpoints it had itself queried as **four**
+
+**Turn 2**, asked for EFT, opened *"All confirmed against the game data"* and
+was worse. Imported:
+
+    problems: powergrid over: 323 / 67.5, calibration over: 425 / 400, rig slots over by 1
+    slots:    high [4,6]  med [3,4]  low [4,4]  rig [4,3]
+
+`Small Core Defense Field Extender I` is a **rig**, listed in the mid rack, so
+the fit carries four rigs on a three-rig hull and lost its shield extender
+entirely — a "shield tanked" fit with no buffer. The guns are still medium:
+99 MW each against 67.5 MW of grid, **4.8x over**. Correctly built with 200mm
+smalls the same hull does **240.0 dps and fits** (53.9/67.5 PG) against 128.9
+for the three mediums — the wrong-rung error, third run running, now with a
+rationalisation attached ("3 guns, not 4 — leaves CPU/PG headroom").
+
+The ammo advice, which was the whole answer to "works at all ranges", is
+inverted. Measured `weaponRangeMultiplier`:
+
+| charge | range mult | tracking | damage |
+|---|---|---|---|
+| Republic Fleet EMP S | 0.5 | 1.0 | EM |
+| Republic Fleet Fusion S | 0.5 | 1.0 | explosive |
+| Republic Fleet Phased Plasma S | 0.5 | 1.0 | **thermal** |
+| **Barrage S** | **1.0** | 0.75 | explosive/kinetic |
+
+All three it chose are range-**identical**. Barrage, the ammo that actually
+doubles range, is absent from the cargo. "Phased Plasma as an EM-resist-punching
+option" inverts thermal and EM. `Nanite Repair Paste ... in case you take
+structure damage` is not what paste does.
+
+**Two bugs of my own, caught while grading.** `pilot_effects` excluded implant
+slots 1-5 as "attribute implants (training speed)". The pirate SETS live there:
+15 of the 18 published Snake implants are slots 1-5, so asking about Snakes
+returned **0 moved a number** — a false negative from the one tool built to stop
+implants being named from memory. Now 18 considered, 15 moved. And `_headline`
+had no warp-speed metric, so all twelve Ascendancy implants also read 0; with
+`warp_speed_aus` added they report `{'warp_speed_aus': 0.26}` and **nothing
+else**, which is the direct refutation of the transcript's "Ascendancy helps
+align/warp speed". Align and warp speed are different numbers. Both fixed, both
+asserted.
+
+**The standing lesson, again.** `eve-sde/SKILL.md` carries an explicit rule to
+load `eve-fitting` when a question crosses into combining a hull with modules.
+The question was "what should I fly, how should it be fitted". `eve-sde` loaded;
+`eve-fitting` did not. Prose telling the model what to load fails the same way
+prose telling it to call `sweep_hulls` failed three times. Worth noting the
+control arm is not a wasted run: it is the first clean measurement of what this
+question looks like with the documents and none of the tools, and the answer is
+three invented module names and a fit five times over its powergrid.
