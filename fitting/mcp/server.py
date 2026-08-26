@@ -1037,9 +1037,22 @@ def pilot_effects(fit_id: str, kind: str = 'boosters', slot: int = None,
         rows.append(row)
     _recalc(fit)
     rows.sort(key=lambda r: -r['best_relative_gain_pct'])
+    shown = rows[:limit]
+    hidden = len(rows) - len(shown)
     return {'fit_id': fit_id, 'ship': _ship_name(fit), 'kind': kind,
             'baseline': base, 'considered': len(cands),
-            'moved_a_number': len(rows), 'results': rows[:limit],
+            'moved_a_number': len(rows), 'results': shown,
+            # A truncated list read as an exhaustive one on 2026-08-26: 183
+            # implants moved a number, 12 were shown, and the answer reported
+            # "the only things that moved a number were warp-speed and
+            # capacitor implants" -- while its own payload listed a pirate-set
+            # implant it then said did nothing. Say the quiet part in the data.
+            **({'not_listed': hidden,
+                'results_are_not_exhaustive': (
+                    f'{hidden} more candidates moved a number and are not in '
+                    '`results`. Raise `limit`, or narrow with `slot`/`search`, '
+                    'before saying what does or does not affect this fit.')}
+               if hidden else {}),
             'note': 'measured by fitting each candidate to THIS fit and re-running '
                     'the panel — nothing here is inferred from a name. Candidates '
                     'that changed nothing are not listed at all. '

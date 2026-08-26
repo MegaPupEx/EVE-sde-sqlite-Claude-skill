@@ -282,6 +282,15 @@ async def main(pyfa):
             assert any(r.get('may_roll_side_effects') for r in drugs['results']), drugs
             assert drugs['results'] == sorted(
                 drugs['results'], key=lambda r: -r['best_relative_gain_pct']), 'unranked'
+            # A truncated ranking must announce itself: read as exhaustive, it
+            # produced "the only things that moved a number were ..." from a
+            # top-12 slice of 183.
+            wide = await call('pilot_effects', fit_id=lid, kind='implants',
+                              slot=6, limit=3)
+            if wide['moved_a_number'] > 3:
+                assert wide['not_listed'] == wide['moved_a_number'] - 3, wide
+                assert 'not exhaustive' in wide['results_are_not_exhaustive'] \
+                    or 'not in' in wide['results_are_not_exhaustive'], wide
             await call('delete_fit', fit_id=tanked['fit_id'])
 
             # ---- the sweep must be able to change the weapon system ---------

@@ -1768,3 +1768,86 @@ prose telling it to call `sweep_hulls` failed three times. Worth noting the
 control arm is not a wasted run: it is the first clean measurement of what this
 question looks like with the documents and none of the tools, and the answer is
 three invented module names and a fit five times over its powergrid.
+
+## 2026-08-26 (second) — the probe run properly, and the best result so far
+
+Same question, servers connected. Every new tool fired, several for the first
+time ever.
+
+**`sweep_hulls(adapt=True)` was called.** After three runs where the plain sweep
+was suggested and ignored, the adaptive one got used unprompted and returned a
+ranking the answer then reasoned about. `applied_dps` was run at **three
+ranges** (2/15/28 km), which is exactly the shape the brief needed and the thing
+the previous run never did. `pilot_effects` was run for both implants and
+boosters and the results were used. `fitting_breakdown` appeared on a grid
+overrun and was acted on. `align_time_prop_off_s` was quoted *and explained*:
+*"align-time-prop-off 2.4s — that's your actual 'can I leave' number, not the
+3.3s shown with the MWD still cycling."* The EFT arrived unasked and the final
+fit is **legal**. That is the whole stack working.
+
+**Three verified errors, one harmful.**
+
+*Point range.* The answer says "Point is 20km" and advises "burn to 21km+ under
+MWD and warp". `Warp Disruptor II` on that fit has `maxRange: 24000`. Burning
+to 21 km does not break a 24 km point — the escape plan, which is the centre of
+the brief, is wrong by 3 km.
+
+*Falloff.* The Hecate (385 dps) and Confessor (294 dps) were both rejected as
+"short-range-only hulls — no falloff", and projectiles called "the only small
+weapon system with real optimal and falloff". Measured:
+
+| gun | optimal | falloff |
+|---|---|---|
+| 150mm Light AutoCannon II | 1,080 | 4,730 |
+| Light Neutron Blaster II | 1,800 | 2,500 |
+| Small Focused Pulse Laser II | **6,300** | 2,500 |
+
+The premise is false and it inverts the conclusion. Building a quick pulse
+Confessor beside the delivered Svipul, both in Sharpshooter, applied vs a
+35 m / 400 m/s frigate:
+
+| range | Svipul (delivered) | Confessor (pulse) |
+|---|---|---|
+| 2 km | 240.0 | 133.9 |
+| 8 km | 188.9 | **284.8** |
+| 15 km | 47.7 | **297.1** |
+
+The hull rejected for having "no range" holds ~6x the damage at 15 km. The
+Svipul is the brawler; the Confessor is the range-flexible one. The answer got
+its own thesis backwards while holding the numbers that disprove it. (The
+Confessor build above is not yet legal, so this shows the premise is wrong, not
+that the Confessor definitively wins.) It also never noted that the sweep rows
+it quoted were themselves illegal — the tool's own note says to treat those as
+upper bounds.
+
+*Modes, absent entirely.* No `op: mode` call anywhere. The Svipul's defining
+mechanic went unmentioned, and the fit sat in Propulsion the whole time:
+
+| mode | speed | align off | sig | dps | ehp |
+|---|---|---|---|---|---|
+| Defense | 2145 | 3.62 | **173** | 221.5 | **11,139** |
+| Propulsion | **3339** | **2.41** | 385 | 221.5 | 7,791 |
+| Sharpshooter | 2145 | 3.62 | 385 | **295.3** | 7,791 |
+
+Every number quoted to the user is the Propulsion column. Sharpshooter is
+**+33% damage** for a button press; Defense is +43% EHP and **-55% signature**.
+The very first graded Svipul run covered all three in a table — this is a
+regression on that axis, and it is the second run in a row where signature
+radius never gets mentioned on a "don't get caught" brief.
+
+**Smaller:** "221 DPS sustained" — 221.5 is burst, sustained is 214.3. The
+charge sweep reported `Hail S +81.3 dps` over the loaded Barrage at 2 km and
+the cargo carries Barrage and Fusion, no Hail. Two rig slots and 100
+calibration were left empty with the advisory asking why, and only the empty
+high got an explanation. `set_booster` was never called, so the
+command-destroyer recommendation for the second account is the one part of the
+answer with no number behind it — on the tool built for exactly that question.
+
+**One more bug of mine.** `pilot_effects` returned `moved_a_number: 183` with
+12 rows, and the answer read the 12 as the whole list: *"the only things that
+moved a number were warp-speed hardwirings and capacitor implants"* — while its
+own payload listed `High-grade Rapture Delta/Epsilon`, a pirate-set implant, in
+those very 12. Truncation now announces itself with `not_listed` and
+`results_are_not_exhaustive`, the same treatment `applied_dps` already gives
+skipped charges. Silent truncation reads as coverage; that is the third time
+this shape has cost an answer.
