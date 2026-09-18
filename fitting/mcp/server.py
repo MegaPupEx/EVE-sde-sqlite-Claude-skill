@@ -156,6 +156,47 @@ _ENGINE_THREAD = concurrent.futures.ThreadPoolExecutor(
     max_workers=1, thread_name_prefix='eos-engine')
 
 
+try:
+    from mcp.server.mcpserver.exceptions import ToolError
+except ImportError:                        # older SDK: messages were never hidden
+    ToolError = None
+
+
+def _user_error(msg):
+    """An error whose MESSAGE is meant for the caller, not a leaked traceback."""
+    return ToolError(msg) if ToolError is not None else ValueError(msg)
+
+
+def _surface_errors(fn):
+    """Let deliberate error messages reach the caller.
+
+    MCP SDK 2.x splits tool failures in two: a `ToolError` reaches the client
+    verbatim, and everything else is replaced with "Error executing tool
+    <name>" so an internal traceback can never leak. Sound default -- but every
+    message this server writes ON PURPOSE was travelling as ValueError or
+    EftError, so the whole lot was being swallowed: the `did_you_mean`
+    suggestions, "that is drone syntax, repeat the line once per module",
+    "name `group` to enumerate a class", the charge-size rejection.
+
+    Caught 2026-09-18, when a fresh container installed mcp 2.2.0 (setup.sh
+    pins no version) and the smoke test's "own line" assertion failed with the
+    message gone. The assertion is the only reason this was not shipped blind,
+    which is the argument for testing error TEXT and not just error-ness.
+
+    ValueError is this server's convention for "the caller asked for something
+    impossible"; anything else stays hidden, exactly as the SDK intends.
+    """
+    @functools.wraps(fn)
+    def surfaced(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except ValueError as exc:
+            if ToolError is None:
+                raise
+            raise ToolError(str(exc)) from exc
+    return surfaced
+
+
 def _engine_thread(fn):
     # Re-entrant: tools call each other (compare_fits -> get_stats), and a
     # submit from the pool's own single thread would deadlock forever.
@@ -164,11 +205,11 @@ def _engine_thread(fn):
         if ENGINE_ERROR:
             _load_engine()                     # bootstrap may have finished since
         if ENGINE_ERROR:
-            raise RuntimeError(ENGINE_ERROR)   # every tool, one honest message
+            raise _user_error(ENGINE_ERROR)    # every tool, one honest message
         if threading.current_thread().name.startswith('eos-engine'):
             return fn(*args, **kwargs)
         return _ENGINE_THREAD.submit(fn, *args, **kwargs).result()
-    return pinned
+    return _surface_errors(pinned)
 
 
 FITS = {}
@@ -1912,6 +1953,7 @@ def _sde_build():
 
 
 @mcp.tool()
+@_surface_errors
 def engine_info() -> dict:
     """Engine + data build, and whether it matches layer 1's SDE build. Any skew means the two layers may disagree; `parity` says plainly that no attribute-level comparison has been run, because none has."""
     meta = dict(sqlite3.connect(os.path.join(ARGS.pyfa, 'eve.db'))

@@ -1851,3 +1851,42 @@ those very 12. Truncation now announces itself with `not_listed` and
 `results_are_not_exhaustive`, the same treatment `applied_dps` already gives
 skipped charges. Silent truncation reads as coverage; that is the third time
 this shape has cost an answer.
+
+## 2026-09-18 — the SDK started swallowing every error message we wrote
+
+A fresh container installed **mcp 2.2.0** (`setup.sh` pins no version) and the
+smoke suite failed on the one assertion that checks error *text*:
+
+    assert 'own line' in str(exc) or 'once per module' in str(exc)
+    AssertionError: Error executing tool import_fit
+
+Not data drift. MCP SDK 2.x splits tool failures in two: a `ToolError` reaches
+the client verbatim, everything else is replaced with `"Error executing tool
+<name>"` so an internal traceback can never leak. A sound default — but every
+message this server writes on purpose travelled as `ValueError` or `EftError`,
+so the entire deliberate-error surface went dark at once: the `did_you_mean`
+suggestions, *"that is drone syntax, repeat the line once per module"*,
+*"name `group` to enumerate a class"*, the charge-size rejection, the
+stale-fit-id explanation. Callers got eight words and no reason.
+
+Fixed in one place: `EftError` now subclasses `ValueError` (which it always
+was semantically), `_engine_thread` composes a `_surface_errors` wrapper that
+re-raises `ValueError` as `ToolError`, and `engine_info` — the one tool that
+deliberately runs off the engine thread, because it is what you call to
+diagnose a broken engine — carries the wrapper directly. Anything that is not
+a `ValueError` still stays hidden, exactly as the SDK intends.
+
+**Layer 1 was untouched by this.** `sde/mcp/server.py` speaks JSON-RPC through
+its own stdlib `_stdio.py` and has never imported the SDK — the choice made so
+layer 1 installs without a virtualenv turned out to be an isolation boundary
+against the dependency as well.
+
+Two things worth keeping:
+
+* **Test the error text, not just the error.** `assert raises` would have
+  passed happily through this. The one assertion that read the *message* is
+  the only reason it was caught instead of shipped blind.
+* **An unpinned dependency changed a behavioural contract silently.** Nothing
+  in the release notes reached us; a fresh container was the messenger. That is
+  an argument for the fresh-clone test path staying in the rotation, not for
+  pinning and freezing.

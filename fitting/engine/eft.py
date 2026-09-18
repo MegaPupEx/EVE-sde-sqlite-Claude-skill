@@ -35,7 +35,7 @@ _MUTATION_REF = re.compile(r'\s*\[(\d+)\]$')
 _EMPTY_SLOT = re.compile(r'^\[Empty (Low|Med|High|Rig|Subsystem|Service) slot\]$', re.IGNORECASE)
 
 
-class EftError(Exception):
+class EftError(ValueError):
     pass
 
 
