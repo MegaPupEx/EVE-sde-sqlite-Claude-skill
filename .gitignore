@@ -8,3 +8,7 @@ eve-sde-*.sqlite
 eve-sde-*.sqlite.xz
 fitting/adapter/cache/
 .setup.lock
+
+# pyfa's engine database lives under fitting/work/; a stray empty eve.db was
+# committed at the root on 2026-08-17 and is exactly the name the engine globs for.
+eve.db
