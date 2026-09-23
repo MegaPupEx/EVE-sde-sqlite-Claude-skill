@@ -1890,3 +1890,39 @@ Two things worth keeping:
   in the release notes reached us; a fresh container was the messenger. That is
   an argument for the fresh-clone test path staying in the rotation, not for
   pinning and freezing.
+
+## 2026-09-22 — the balance detector worked, and gated the build for it
+
+First CCP releases after the merge, and the newly-live `fitting-engine` job
+failed three of them. Cause, confirmed locally after refreshing the engine to
+3538132:
+
+    PANEL DRIFT golem-bastion-shield
+      navigation.mass_kg  157,000,000 -> 125,600,000
+
+CCP cut the Golem's mass by 20%, normalising it against the other Marauders
+(Paladin 128.0M, Kronos 118.4M, Vargur 120.0M). **616 panel leaves compared,
+exactly one differed.** A true positive from the balance-change detector — and
+it reddened the build, which is the wrong response to a fact about the game.
+
+Two defects, not one:
+
+1. `selftest.py` fused a structural test with a balance detector and gated on
+   both. CCP moves numbers every few days; a check that fails on that is a
+   chore generator, not a test.
+2. The panel comparison `continue`d past a drifted fit, so the round-trip check
+   was **skipped for exactly the fit that changed**. A balance pass did not just
+   fail the build, it quietly put a hole in the structural coverage of the one
+   hull CCP had touched.
+
+Check 2 now reports and never gates, and no longer skips check 3 — so the
+Golem's round-trip is verified for the first time since the mass changed.
+`--accept` re-pins the references in place, making "confirm and accept a
+balance change" one command instead of hand-edited JSON. The workflow already
+publishes the same diff as its balance-change report, so nothing is lost.
+
+The rule worth keeping: **gate on relationships only we can break; report
+magnitudes CCP owns.** Same principle the layer-1 doc counts need.
+
+Incidental confirmation: the engine moved 3424810 -> 3538132, 113k builds, and
+the MCP smoke suite passed unchanged.

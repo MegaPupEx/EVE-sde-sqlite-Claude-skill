@@ -1,129 +1,129 @@
 {
- "name": "golem-bastion-shield",
- "ship": "Golem",
- "exercises": "bastion state: preMul resist chain beside postPercent hardener, torpedo marauder, local shield boost bonus",
- "meta": {
-  "engine": "pyfa-eos",
-  "pyfa_commit": "8b04f3b271e614b3e103853b44a7851a63d79d0e",
-  "engine_client_build": "3470007",
-  "engine_dump_time": "1786976710",
-  "character": "all-5",
-  "damage_profile": "uniform",
-  "generated": "2026-08-17"
- },
- "modules": [
-  [
-   "Torpedo Launcher II",
-   "Mjolnir Torpedo"
-  ],
-  [
-   "Torpedo Launcher II",
-   "Mjolnir Torpedo"
-  ],
-  [
-   "Torpedo Launcher II",
-   "Mjolnir Torpedo"
-  ],
-  [
-   "Torpedo Launcher II",
-   "Mjolnir Torpedo"
-  ],
-  [
-   "Bastion Module I",
-   null
-  ],
-  [
-   "Multispectrum Shield Hardener II",
-   null
-  ],
-  [
-   "X-Large Shield Booster II",
-   null
-  ],
-  [
-   "Ballistic Control System II",
-   null
-  ],
-  [
-   "Damage Control II",
-   null
-  ]
- ],
- "drones": [],
- "stats": {
-  "fitting": {
-   "cpu": [
-    597.5,
-    893.75
-   ],
-   "powergrid": [
-    6805.4,
-    10625.0
-   ],
-   "calibration": [
-    0,
-    400.0
-   ]
+  "name": "golem-bastion-shield",
+  "ship": "Golem",
+  "exercises": "bastion state: preMul resist chain beside postPercent hardener, torpedo marauder, local shield boost bonus",
+  "meta": {
+    "engine": "pyfa-eos",
+    "pyfa_commit": "8b04f3b271e614b3e103853b44a7851a63d79d0e",
+    "engine_client_build": "3470007",
+    "engine_dump_time": "1786976710",
+    "character": "all-5",
+    "damage_profile": "uniform",
+    "generated": "2026-08-17"
   },
-  "defense": {
-   "hp": {
-    "shield": 11000.0,
-    "armor": 8375.0,
-    "hull": 9625.0
-   },
-   "resists": {
-    "shield": {
-     "em": 0.5788,
-     "thermal": 0.7473,
-     "kinetic": 0.7789,
-     "explosive": 0.7894
+  "modules": [
+    [
+      "Torpedo Launcher II",
+      "Mjolnir Torpedo"
+    ],
+    [
+      "Torpedo Launcher II",
+      "Mjolnir Torpedo"
+    ],
+    [
+      "Torpedo Launcher II",
+      "Mjolnir Torpedo"
+    ],
+    [
+      "Torpedo Launcher II",
+      "Mjolnir Torpedo"
+    ],
+    [
+      "Bastion Module I",
+      null
+    ],
+    [
+      "Multispectrum Shield Hardener II",
+      null
+    ],
+    [
+      "X-Large Shield Booster II",
+      null
+    ],
+    [
+      "Ballistic Control System II",
+      null
+    ],
+    [
+      "Damage Control II",
+      null
+    ]
+  ],
+  "drones": [],
+  "stats": {
+    "fitting": {
+      "cpu": [
+        597.5,
+        893.75
+      ],
+      "powergrid": [
+        6805.4,
+        10625.0
+      ],
+      "calibration": [
+        0,
+        400.0
+      ]
     },
-    "armor": {
-     "em": 0.6956,
-     "thermal": 0.7489,
-     "kinetic": 0.6005,
-     "explosive": 0.4521
+    "defense": {
+      "hp": {
+        "shield": 11000.0,
+        "armor": 8375.0,
+        "hull": 9625.0
+      },
+      "resists": {
+        "shield": {
+          "em": 0.5788,
+          "thermal": 0.7473,
+          "kinetic": 0.7789,
+          "explosive": 0.7894
+        },
+        "armor": {
+          "em": 0.6956,
+          "thermal": 0.7489,
+          "kinetic": 0.6005,
+          "explosive": 0.4521
+        },
+        "hull": {
+          "em": 0.7186,
+          "thermal": 0.7186,
+          "kinetic": 0.7186,
+          "explosive": 0.7186
+        }
+      },
+      "ehp_uniform": {
+        "shield": 39798.7,
+        "armor": 22291.2,
+        "hull": 34204.0
+      },
+      "ehp_total_uniform": 96293.9,
+      "shield_regen_peak_hps": 16.14
     },
-    "hull": {
-     "em": 0.7186,
-     "thermal": 0.7186,
-     "kinetic": 0.7186,
-     "explosive": 0.7186
+    "offense": {
+      "dps_burst": 1227.27,
+      "dps_sustained": 1161.8,
+      "dps_drones": 0,
+      "volley": 5445.0
+    },
+    "capacitor": {
+      "capacity_gj": 7906.2,
+      "recharge_time_s": 862.5,
+      "stable": false,
+      "stable_pct_or_ttl_s": 132.0
+    },
+    "navigation": {
+      "max_velocity_ms": 0.0,
+      "align_time_s": 11.318,
+      "signature_m": 450.0,
+      "mass_kg": 125600000.0,
+      "warp_speed_aus": 3.0
+    },
+    "targeting": {
+      "scan_resolution_mm": 175.0,
+      "lock_range_km": 154.38,
+      "sensor_strength": 55.2,
+      "max_targets": 10,
+      "lock_time_frigate_35m_s": 12.66
     }
-   },
-   "ehp_uniform": {
-    "shield": 39798.7,
-    "armor": 22291.2,
-    "hull": 34204.0
-   },
-   "ehp_total_uniform": 96293.9,
-   "shield_regen_peak_hps": 16.14
-  },
-  "offense": {
-   "dps_burst": 1227.27,
-   "dps_sustained": 1161.8,
-   "dps_drones": 0,
-   "volley": 5445.0
-  },
-  "capacitor": {
-   "capacity_gj": 7906.2,
-   "recharge_time_s": 862.5,
-   "stable": false,
-   "stable_pct_or_ttl_s": 132.0
-  },
-  "navigation": {
-   "max_velocity_ms": 0.0,
-   "align_time_s": 11.312,
-   "signature_m": 450.0,
-   "mass_kg": 157000000.0,
-   "warp_speed_aus": 3.0
-  },
-  "targeting": {
-   "scan_resolution_mm": 175.0,
-   "lock_range_km": 154.38,
-   "sensor_strength": 55.2,
-   "max_targets": 10,
-   "lock_time_frigate_35m_s": 12.66
   }
- }
 }
