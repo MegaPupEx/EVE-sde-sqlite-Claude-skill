@@ -1054,6 +1054,10 @@ def pilot_effects(fit_id: str, kind: str = 'boosters', slot: int = None,
         item = eftlib._lookup(name)
         if item is None:
             continue
+        # `obj` must exist before the try: `finally` runs even when Wrap() is
+        # what raised, and on the FIRST candidate that would be an
+        # UnboundLocalError escaping the except and killing the whole tool.
+        obj = None
         try:
             obj = Wrap(item)
             bucket.append(obj)
@@ -1062,7 +1066,7 @@ def pilot_effects(fit_id: str, kind: str = 'boosters', slot: int = None,
             failed += 1                    # not construct is simply not offered
             after = base
         finally:
-            if obj in bucket:
+            if obj is not None and obj in bucket:
                 bucket.remove(obj)
         delta = {k: round(after[k] - base[k], 2) for k in base
                  if abs(after[k] - base[k]) > 0.005}
@@ -1083,6 +1087,10 @@ def pilot_effects(fit_id: str, kind: str = 'boosters', slot: int = None,
     return {'fit_id': fit_id, 'ship': _ship_name(fit), 'kind': kind,
             'baseline': base, 'considered': len(cands),
             'moved_a_number': len(rows), 'results': shown,
+            # candidates the engine refused to construct were counted and then
+            # dropped on the floor; a tool that silently skips part of its own
+            # candidate set is the failure this whole surface exists to prevent
+            **({'could_not_be_fitted': failed} if failed else {}),
             # A truncated list read as an exhaustive one on 2026-08-26: 183
             # implants moved a number, 12 were shown, and the answer reported
             # "the only things that moved a number were warp-speed and

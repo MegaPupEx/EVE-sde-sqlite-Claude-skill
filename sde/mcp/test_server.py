@@ -78,6 +78,11 @@ async def main(sde):
             assert r[0]['label'] == 'rifter hull' and r[0]['data'][0][0] == 'Rifter', r[0]
             assert r[1]['rows'] == 2, r[1]
             assert 'error' in r[2] and r[0].get('data'), 'a bad statement must not kill the batch'
+            # the table hint is itself capped; 107 tables shown as 40 with no
+            # note reads as "those are the tables"
+            hint = r[2]
+            if 'tables_available' in hint and len(hint['tables_available']) == 40:
+                assert hint.get('tables_not_listed', 0) > 0, hint
             assert q['sde_build'], q
             # the raw-value lint fires on statement 2 (selects `value` by attribute)
             assert any('unitID' in n for n in r[1].get('notes', [])), r[1]
@@ -177,6 +182,15 @@ async def main(sde):
 
             info = await call('sde_info')
             assert '108' in info['unit_corrections'], info
+            # This field declares what the server does NOT correct — the
+            # mitigation taken when trap knowledge moved from docs into code.
+            # It was capped at LIMIT 8 and reported 8 of 38 silently, so the
+            # honesty mechanism itself under-reported by 79%.
+            assert info['units_without_a_rule_count'] >= len(info['units_without_a_rule'])
+            if info['units_without_a_rule_count'] > len(info['units_without_a_rule']):
+                assert info['units_without_a_rule_not_listed'] == (
+                    info['units_without_a_rule_count']
+                    - len(info['units_without_a_rule'])), info
             # the parts are separate files from separate build runs; a set that
             # disagrees with itself must say so rather than report one part's
             # number as though it were the database's

@@ -165,7 +165,9 @@ def _schema_hint(db, message, stmt):
     if 'no such table' in message:
         missing = message.rsplit(':', 1)[-1].strip()
         near = [t for t in tables if missing.lower().strip('_') in t.lower()]
-        return {'tables_available': sorted(near or tables)[:40]}
+        listed = sorted(near or tables)
+        return {'tables_available': listed[:40],
+                **({'tables_not_listed': len(listed) - 40} if len(listed) > 40 else {})}
     if 'no such column' not in message:
         return {}
     # Report the columns of every table this statement actually mentions.
@@ -176,7 +178,11 @@ def _schema_hint(db, message, stmt):
                 hint[t] = [r[1] for r in db.execute(f'PRAGMA table_info({t})')]
             except sqlite3.Error:
                 pass
-    return {'columns_available': hint} if hint else {'tables_available': sorted(tables)[:40]}
+    if hint:
+        return {'columns_available': hint}
+    listed = sorted(tables)
+    return {'tables_available': listed[:40],
+            **({'tables_not_listed': len(listed) - 40} if len(listed) > 40 else {})}
 
 
 @mcp.tool()
@@ -686,7 +692,7 @@ def sde_info() -> dict:
     db = _conn()
     unknown = db.execute(
         'SELECT unitID, COUNT(*) FROM dogma_attributes WHERE unitID IS NOT NULL '
-        'AND unitID NOT IN (%s) GROUP BY unitID ORDER BY COUNT(*) DESC LIMIT 8'
+        'AND unitID NOT IN (%s) GROUP BY unitID ORDER BY COUNT(*) DESC'
         % ','.join(str(k) for k in UNITS)).fetchall()
     return {
         'sde_build': BUILD,
@@ -696,7 +702,16 @@ def sde_info() -> dict:
                        'rebuild before trusting them.'} if MIXED_BUILDS else {}),
         'parts': [p[8:-7] for p in PARTS],
         'unit_corrections': {str(k): v[1] for k, v in UNITS.items()},
-        'units_without_a_rule': [{'unitID': u, 'attributes': n} for u, n in unknown],
+        # This field is the server's own declaration of what it does NOT fix --
+        # the mitigation accepted when trap knowledge moved out of docs and into
+        # code. It was capped at LIMIT 8 and showed 8 of 38 with no hint that 30
+        # were hidden, so the honesty mechanism under-reported by 79%. Now the
+        # count is exact and the list is what gets abbreviated, loudly.
+        'units_without_a_rule_count': len(unknown),
+        'units_without_a_rule': [{'unitID': u, 'attributes': n}
+                                 for u, n in unknown[:12]],
+        **({'units_without_a_rule_not_listed': len(unknown) - 12}
+           if len(unknown) > 12 else {}),
         'not_corrected': NOT_CORRECTED,
         'reminder': 'batch statements into one `query` call; each call re-reads the conversation',
     }

@@ -1926,3 +1926,55 @@ magnitudes CCP owns.** Same principle the layer-1 doc counts need.
 
 Incidental confirmation: the engine moved 3424810 -> 3538132, 113k builds, and
 the MCP smoke suite passed unchanged.
+
+## 2026-09-24 — review: what is coupled to CCP, and three real defects
+
+Owner's argument, and it is the right one: golden-value self-tests are the
+wrong shape for a game under active development. The evidence that settles it
+is the Paladin. CCP's mass pass cut the Marauders and Black Ops, and in the
+same window shipped align times that produced **two-minute aligns** on the
+Paladin and one other hull — then corrected them. At builds 3538132 and
+3542233 the Paladin reads 15.22 s, so the bad value existed only in between.
+
+That is the case a pinned panel cannot survive. A golden test reports
+"different" and cannot distinguish three causes:
+
+* CCP changed it on purpose — accept
+* CCP shipped a bug — do NOT accept; `--accept` would have pinned a
+  two-minute align as truth, and the later fix would then read as fresh drift
+* we broke it — the only one worth failing a build over
+
+**Coupling inventory.** Where the project is pinned to values CCP owns:
+
+| surface | size | drifts on |
+|---|---|---|
+| reference panels | **616 stat leaves** / 14 fits | every balance pass |
+| doc claims | 139 checks, **10 currently drifted** | any type added |
+| eval keys | 4 files pinned at build **3470007** | every balance pass |
+| hard-coded game *names* | 11 strings | renames only — different, milder risk |
+
+The eval keys are the quiet one: the engine is at 3538132 and the keys are 68k
+builds behind, so any eval run today grades against stale answers.
+
+**Three defects found, all fixed.**
+
+1. `pilot_effects` — `obj` was assigned inside the `try` and tested in the
+   `finally`. Any candidate the engine refuses to construct raises before the
+   assignment, and on the FIRST candidate that is an `UnboundLocalError`
+   escaping the `except` and killing the tool. The `except` exists precisely
+   because construction was expected to fail, so this was reachable by design.
+2. `pilot_effects` — `failed` was counted and never reported. Candidates the
+   engine could not build vanished silently, which is the exact failure the
+   truncation work exists to prevent. Now `could_not_be_fitted`.
+3. `sde_info.units_without_a_rule` — the server's own declaration of what it
+   does NOT correct, capped at `LIMIT 8`. **45 unitIDs are in use, the server
+   has rules for 7, so 38 are uncorrected and it reported 8** with no hint that
+   30 were hidden. The mitigation accepted when trap knowledge moved out of
+   docs and into code was under-reporting by 79%. Now an exact count with the
+   list abbreviated loudly. The table hint had the same shape: 40 of 107 shown
+   silently, now `tables_not_listed: 67`.
+
+Truncation audit, completed: `query` rows, `size_ladder`, `pilot_effects`,
+`applied_dps` charges and `sweep_hulls` (which errors rather than truncating)
+all disclose. `did_you_mean` at LIMIT 5 does not, and is left alone — a
+suggestion list is inherently partial and reads that way.
